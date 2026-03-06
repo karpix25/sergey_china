@@ -31,7 +31,8 @@ class Video(Base):
     is_product = Column(Boolean, nullable=True)
     duration = Column(Float, nullable=True)
     script = Column(Text, nullable=True)
-    description = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)     # Final post text
+    product_info = Column(Text, nullable=True)    # Catchy product summary from analysis
     
     processed_video_path = Column(String, nullable=True)  # GCS URI (gs://...)
     local_video_path = Column(String, nullable=True)      # Local path served via /outputs

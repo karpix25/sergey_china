@@ -164,6 +164,7 @@ async def _process_campaign_inner(
                 video.is_product = analysis["is_product"]
                 video.duration = analysis["detected_duration"]
                 video.script = analysis["script"]
+                video.product_info = analysis.get("product_summary", "")
                 log_activity(db, profile_id, f"Gemini: Анализ видео {video.tiktok_id} завершен", "info", video_id=video.id)
                 db.commit()
 
@@ -178,7 +179,7 @@ async def _process_campaign_inner(
                 if base_description:
                     logger.info("  - Adapting description for video %s...", video.tiktok_id)
                     video.description = await analysis_service.generate_adapted_description(
-                        video.script, base_description
+                        video.script, base_description, video.product_info
                     )
                     db.commit()
 

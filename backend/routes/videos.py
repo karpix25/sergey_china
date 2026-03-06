@@ -135,7 +135,7 @@ async def _run_bulk_description_update(video_ids: List[int], new_base_descriptio
 
             try:
                 new_desc = await analysis_service.generate_adapted_description(
-                    video.script, new_base_description
+                    video.script, new_base_description, video.product_info or ""
                 )
                 video.description = new_desc
                 db.commit()
@@ -274,9 +274,12 @@ async def process_uploaded_video(
                 script = result.get("script")
                 is_product = result.get("is_product")
                 duration = result.get("detected_duration")
+                product_summary = result.get("product_summary", "")
+                
                 video.script = script
                 video.is_product = is_product
                 video.duration = duration
+                video.product_info = product_summary
                 video.status = "analyzed"
                 db.commit()
             except Exception as e:

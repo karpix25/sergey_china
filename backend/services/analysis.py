@@ -83,12 +83,14 @@ class AnalysisService:
     * СКОРОСТЬ: Рассчитывай текст исходя из 18 символов (БЕЗ пробелов) на 1 секунду видео.
     * ЗАПРЕЩЕНО: Использовать фразы "В этом видео", "Этот ролик показывает", "Посмотрите на...", "На экране мы видим". Не ломай "четвертую стену". Ты должен рассказывать о товаре так, будто ты его используешь или советуешь другу прямо сейчас.
     * СТИЛЬ: Эмоционально, вовлекающе, без упоминания брендов.
+- "product_summary": Очень короткое, "продающее" описание товара (1-2 предложения), которое подчеркивает его главную пользу или уникальность. Это НЕ сценарий озвучки, а именно текст для описания поста.
 
 ВЫДАЙ ОТВЕТ СТРОГО В ФОРМАТЕ JSON:
 {
   "is_product": false,
   "detected_duration": 15.0,
-  "script": "текст озвучки"
+  "script": "текст озвучки",
+  "product_summary": "цепляющее описание товара для поста"
 }
 """
         full_prompt = prompt + (f"\nДОПОЛНИТЕЛЬНОЕ ТРЕБОВАНИЕ: {additional_instructions}" if additional_instructions else "")
@@ -202,7 +204,8 @@ class AnalysisService:
             final_result = {
                 "is_product": bool(clean_data.get("is_product", False)),
                 "detected_duration": float(clean_data.get("detected_duration", 0)),
-                "script": str(clean_data.get("script", ""))
+                "script": str(clean_data.get("script", "")),
+                "product_summary": str(clean_data.get("product_summary", ""))
             }
             print(f"DEBUG: Analysis successful: {final_result}")
             return final_result
@@ -263,16 +266,19 @@ class AnalysisService:
             logger.warning("rewrite_script failed: %s. Returning original.", e)
             return current_script
 
-    async def generate_adapted_description(self, script: str, base_description: str) -> str:
+    async def generate_adapted_description(self, script: str, base_description: str, product_info: str = "") -> str:
         """
-        Create a hybrid description based on the video script (AI analysis) and a base template.
+        Create a hybrid description based on the video analysis result and a base template.
+        Uses product_info if provided, otherwise falls back to the voiceover script.
         """
         if not self.client or not base_description:
             return base_description
 
-        prompt = f"""У нас есть сценарий ролика о товаре (это то, что озвучено в видео):
+        context = product_info if product_info else script
+
+        prompt = f"""У нас есть информация о товаре (это то, о чем видео):
 \"\"\"
-{script}
+{context}
 \"\"\"
 
 Также у нас есть базовый текст/шаблон от пользователя (призыв к действию, ссылки):
@@ -280,10 +286,10 @@ class AnalysisService:
 {base_description}
 \"\"\"
 
-Задача: напиши описание для TikTok/Reels, которое органично объединяет суть товара из сценария и текст пользователя.
+Задача: напиши описание для TikTok/Reels, которое органично объединяет суть товара и текст пользователя.
 
 Требования:
-1. Текст должен быть ГИБРИДНЫМ: 1-2 вводных предложения о пользе товара (на основе сценария), а затем — текст пользователя.
+1. Текст должен быть ГИБРИДНЫМ: сначала 1-2 цепляющих предложения о самом товаре (на основе контекста выше), а затем — текст пользователя.
 2. Обязательно сохрани все ссылки, хештеги и призывы из базового текста.
 3. Текст должен выглядеть как естественный пост от одного лица.
 4. Добавь 2-3 релевантных эмодзи.
