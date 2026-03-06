@@ -48,7 +48,26 @@ class StorageService:
         if not self.bucket:
             return
         blob = self.bucket.blob(blob_name)
-        blob.download_to_filename(destination_file_name)
+        blob.download_to_filename(destination_file_name, timeout=300)
+
+    def download_to_local(self, gcs_uri: str) -> str:
+        """Downloads a gs:// URI to a temporary local file and returns its path."""
+        if not gcs_uri or not gcs_uri.startswith("gs://"):
+            return gcs_uri # Already local or invalid
+            
+        if not self.bucket:
+            # Fallback for local testing: remove gs:// prefix and hope it exists locally
+            return gcs_uri.replace(f"gs://{self.bucket_name or 'bucket'}/", "")
+
+        import uuid
+        blob_name = gcs_uri.replace(f"gs://{self.bucket_name}/", "")
+        # Extract extension if any
+        ext = os.path.splitext(blob_name)[1] or ".tmp"
+        local_filename = f"outputs/download_{uuid.uuid4()}{ext}"
+        os.makedirs("outputs", exist_ok=True)
+        
+        self.download_to_filename(blob_name, local_filename)
+        return local_filename
 
     def generate_signed_url(self, blob_name: str, expiration_minutes: int = 60, download: bool = False) -> str:
         """Generate a temporary signed URL for browser-accessible playback or download."""
