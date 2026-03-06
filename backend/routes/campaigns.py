@@ -121,6 +121,7 @@ async def _process_campaign_inner(
                     profile_id=profile_id,
                     url=v_data["download_url"],
                     thumbnail_url=v_data.get("thumbnail_url"),
+                    original_description=v_data.get("description", ""),
                     status="pending",
                 )
                 db.add(video)
@@ -178,7 +179,7 @@ async def _process_campaign_inner(
                 if base_description:
                     logger.info("  - Adapting description for video %s...", video.tiktok_id)
                     video.description = await analysis_service.generate_adapted_description(
-                        video.script, base_description
+                        video.script, base_description, video.original_description
                     )
                     db.commit()
 

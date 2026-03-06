@@ -263,30 +263,38 @@ class AnalysisService:
             logger.warning("rewrite_script failed: %s. Returning original.", e)
             return current_script
 
-    async def generate_adapted_description(self, current_script: str, base_description: str) -> str:
+    async def generate_adapted_description(self, current_script: str, base_description: str, original_description: str = "") -> str:
         """
-        Adapt a base description to match the specific video content (based on the script).
+        Adapt a base description to match the specific video content.
+        Uses both the AI-generated script and the original TikTok description for context.
         """
         if not self.client or not base_description:
             return base_description
 
-        prompt = f"""У нас есть сценарий ролика о товаре:
+        context = f"Сценарий видео:\n{current_script}\n"
+        if original_description:
+            context += f"\nОригинальное описание товара:\n{original_description}\n"
+
+        prompt = f"""У нас есть информация о товаре из видео:
 \"\"\"
-{current_script}
+{context}
 \"\"\"
 
-Также у нас есть базовый текст/шаблон от пользователя (обычно это призыв к действию или ссылка):
+Также у нас есть базовый шаблон/текст от пользователя (который он хочет добавить ко всем видео):
 \"\"\"
 {base_description}
 \"\"\"
 
-Задача: напиши описание для TikTok/Reels, которое органично объединяет суть товара из сценария и базовый текст пользователя.
+Задача: напиши описание для TikTok/Reels, которое является ГИБРИДОМ.
+Оно должно объединить информацию о товаре (из контекста выше) и добавить к нему текст пользователя.
+
 Требования:
-- Обязательно сохрани все ссылки, хештеги и призывы к действию из базового текста.
-- Добавь 1-2 предложения о самом товаре (какую проблему он решает), опираясь на сценарий.
-- Текст должен читаться легко и естественно (2-4 предложения).
-- Добавь 2-3 релевантных эмодзи.
-- Верни ТОЛЬКО готовый текст описания, без кавычек и лишних слов."""
+1. Сначала напиши 1-2 цепляющих предложения конкретно про этот товар (на основе сценария/оригинального описания).
+2. Затем органично добавь весь текст пользователя (ссылки, хештеги, призывы).
+3. Весь текст должен выглядеть как единый пост.
+4. Добавь 2-3 релевантных эмодзи.
+5. Только русский язык.
+6. Верни ТОЛЬКО готовый текст описания, без кавычек и лишних слов."""
 
         try:
             async def _call_adapt():

@@ -103,6 +103,7 @@ class ScraperService:
                                 "id": v_id,
                                 "download_url": v_url,
                                 "thumbnail_url": v_thumb,
+                                "description": v.get("desc", "")
                             })
                     
                     if not processed_videos:

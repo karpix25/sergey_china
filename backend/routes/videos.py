@@ -134,7 +134,9 @@ async def _run_bulk_description_update(video_ids: List[int], new_base_descriptio
                 continue
 
             try:
-                new_desc = await analysis_service.generate_adapted_description(video.script, new_base_description)
+                new_desc = await analysis_service.generate_adapted_description(
+                    video.script, new_base_description, video.original_description or ""
+                )
                 video.description = new_desc
                 db.commit()
                 log_activity(db, video.profile_id, f"Описание видео {video.tiktok_id} обновлено через AI", "info", video_id=video.id)

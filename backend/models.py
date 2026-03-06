@@ -31,7 +31,8 @@ class Video(Base):
     is_product = Column(Boolean, nullable=True)
     duration = Column(Float, nullable=True)
     script = Column(Text, nullable=True)
-    description = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)          # Adapted/Current description
+    original_description = Column(Text, nullable=True) # Description from source (TikTok)
     
     processed_video_path = Column(String, nullable=True)  # GCS URI (gs://...)
     local_video_path = Column(String, nullable=True)      # Local path served via /outputs
