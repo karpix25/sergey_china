@@ -10,6 +10,7 @@ import models
 import schemas
 from database import SessionLocal, get_db
 from helpers.download import download_video
+from helpers.cleanup import cleanup_local_files
 from helpers.logging import log_activity
 from helpers.thumbnails import extract_and_upload_thumbnail
 from services.analysis import analysis_service
@@ -256,14 +257,9 @@ async def _process_campaign_inner(
                     sync_achieved = True
 
                     if gcs_or_local_uri and not gcs_or_local_uri.startswith("local://"):
-                        if os.path.exists(final_path):
-                            os.remove(final_path)
-                            video.local_video_path = None
-                            db.commit()
-                            logger.info("  - Deleted local final file: %s", final_path)
-                        if os.path.exists(local_raw_path):
-                            os.remove(local_raw_path)
-                            logger.info("  - Deleted local raw file: %s", local_raw_path)
+                        cleanup_local_files(final_path, local_raw_path, audio_path, srt_path)
+                        video.local_video_path = None
+                        db.commit()
 
             except Exception as e:
                 err_msg = str(e)[:200]

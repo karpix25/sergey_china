@@ -13,6 +13,7 @@ import models
 import schemas
 from database import SessionLocal, get_db
 from helpers.thumbnails import extract_and_upload_thumbnail
+from helpers.cleanup import cleanup_local_files
 from services.analysis import analysis_service
 from services.audio import audio_service
 from services.storage import storage_service
@@ -325,9 +326,13 @@ async def process_uploaded_video(
 
                 gcs_proc = storage_service.upload_from_filename(processed, f"processed/{video.tiktok_id}.mp4")
                 video.processed_video_path = gcs_proc
-                video.local_video_path = processed
+                video.local_video_path = None
                 video.status = "merged"
                 db.commit()
+                
+                # Cleanup local files
+                cleanup_local_files(processed, local_path, audio_path, srt_path)
+                
                 logger.info("[Upload] Video %d ready (full)", video_id)
             except Exception as e:
                 logger.error("[Upload] Merge failed: %s", e)
@@ -409,9 +414,7 @@ async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, ov
                 log_activity(db, video.profile_id, f"Дизайн видео {video.tiktok_id} обновлен", "success", video_id=video.id)
                 
                 # Cleanup
-                for p in [local_raw, local_audio, final_local]:
-                    if p and os.path.exists(p): os.remove(p)
-                if local_srt and os.path.exists(local_srt): os.remove(local_srt)
+                cleanup_local_files(local_raw, local_audio, final_local, local_srt)
 
             except Exception as e:
                 logger.error("Failed to update design for video %d: %s", vid, e)

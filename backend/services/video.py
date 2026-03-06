@@ -245,6 +245,15 @@ class VideoProcessor:
         )
             
         ffmpeg.run(stream, overwrite_output=True)
+
+        # Cleanup internal temporary assets
+        if subtitles_path and target_duration and final_srt_path != subtitles_path:
+            try:
+                if os.path.exists(final_srt_path):
+                    os.remove(final_srt_path)
+            except Exception:
+                pass
+
         return output_path
 
     def extract_thumbnail(self, video_path: str, output_path: str) -> bool:
