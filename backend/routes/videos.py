@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import uuid as _uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
