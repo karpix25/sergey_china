@@ -1,0 +1,41 @@
+# Environment variables — NEVER commit these
+.env
+*.env
+
+# Service account keys — NEVER commit
+*.json
+!frontend/components.json
+!frontend/package.json
+!frontend/tsconfig*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Local video files
+backend/tmp/
+backend/outputs/
+backend/storage/
+outputs/
+storage/
+
+# Database
+*.db
+*.sqlite
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
