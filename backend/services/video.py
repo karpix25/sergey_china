@@ -2,7 +2,10 @@ import ffmpeg
 import os
 import random
 import uuid
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class VideoProcessor:
     def __init__(self):
