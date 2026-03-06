@@ -9,7 +9,7 @@ class SubtitleService:
         millis = int((seconds % 1) * 1000)
         return f"{hours:02}:{minutes:02}:{secs:02},{millis:03}"
 
-    def alignments_to_srt(self, alignment: dict, words_per_chunk: int = 5) -> str:
+    def alignments_to_srt(self, alignment: dict, words_per_chunk: int = 2) -> str:
         """
         Converts character alignments to SRT.
         Groups characters into words, then words into chunks.
