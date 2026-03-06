@@ -16,6 +16,11 @@ load_dotenv()
 
 import models
 from database import engine, get_db
+from helpers.db_utils import upgrade_db_schema
+
+# Auto-upgrade schema before start
+upgrade_db_schema()
+
 from routes.videos import router as videos_router
 from routes.campaigns import router as campaigns_router
 from routes.overlays import router as overlays_router
