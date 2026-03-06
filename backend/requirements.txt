@@ -8,7 +8,7 @@ google-genai
 google-auth
 google-cloud-storage==2.14.0
 google-cloud-aiplatform==1.40.0
-elevenlabs==0.2.27
+elevenlabs
 httpx==0.26.0
 python-multipart==0.0.6
 aiofiles==23.2.1
