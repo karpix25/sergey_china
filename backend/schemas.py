@@ -23,7 +23,6 @@ class VideoResponse(BaseModel):
     duration: Optional[float]
     script: Optional[str]
     description: Optional[str]
-    original_description: Optional[str]
     processed_video_path: Optional[str]
     gcs_path: Optional[str]
     local_video_path: Optional[str]

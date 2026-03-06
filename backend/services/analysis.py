@@ -263,38 +263,32 @@ class AnalysisService:
             logger.warning("rewrite_script failed: %s. Returning original.", e)
             return current_script
 
-    async def generate_adapted_description(self, current_script: str, base_description: str, original_description: str = "") -> str:
+    async def generate_adapted_description(self, script: str, base_description: str) -> str:
         """
-        Adapt a base description to match the specific video content.
-        Uses both the AI-generated script and the original TikTok description for context.
+        Create a hybrid description based on the video script (AI analysis) and a base template.
         """
         if not self.client or not base_description:
             return base_description
 
-        context = f"Сценарий видео:\n{current_script}\n"
-        if original_description:
-            context += f"\nОригинальное описание товара:\n{original_description}\n"
-
-        prompt = f"""У нас есть информация о товаре из видео:
+        prompt = f"""У нас есть сценарий ролика о товаре (это то, что озвучено в видео):
 \"\"\"
-{context}
+{script}
 \"\"\"
 
-Также у нас есть базовый шаблон/текст от пользователя (который он хочет добавить ко всем видео):
+Также у нас есть базовый текст/шаблон от пользователя (призыв к действию, ссылки):
 \"\"\"
 {base_description}
 \"\"\"
 
-Задача: напиши описание для TikTok/Reels, которое является ГИБРИДОМ.
-Оно должно объединить информацию о товаре (из контекста выше) и добавить к нему текст пользователя.
+Задача: напиши описание для TikTok/Reels, которое органично объединяет суть товара из сценария и текст пользователя.
 
 Требования:
-1. Сначала напиши 1-2 цепляющих предложения конкретно про этот товар (на основе сценария/оригинального описания).
-2. Затем органично добавь весь текст пользователя (ссылки, хештеги, призывы).
-3. Весь текст должен выглядеть как единый пост.
+1. Текст должен быть ГИБРИДНЫМ: 1-2 вводных предложения о пользе товара (на основе сценария), а затем — текст пользователя.
+2. Обязательно сохрани все ссылки, хештеги и призывы из базового текста.
+3. Текст должен выглядеть как естественный пост от одного лица.
 4. Добавь 2-3 релевантных эмодзи.
 5. Только русский язык.
-6. Верни ТОЛЬКО готовый текст описания, без кавычек и лишних слов."""
+6. Верни ТОЛЬКО готовый текст описания, без кавычек и пояснений."""
 
         try:
             async def _call_adapt():

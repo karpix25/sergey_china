@@ -135,7 +135,7 @@ async def _run_bulk_description_update(video_ids: List[int], new_base_descriptio
 
             try:
                 new_desc = await analysis_service.generate_adapted_description(
-                    video.script, new_base_description, video.original_description or ""
+                    video.script, new_base_description
                 )
                 video.description = new_desc
                 db.commit()
