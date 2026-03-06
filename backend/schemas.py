@@ -8,7 +8,7 @@ class CampaignCreate(BaseModel):
     base_description: Optional[str] = None
     enable_subtitles: bool = True
     subtitle_style: Optional[dict] = None
-    overlay_settings: Optional[dict] = None  # {bottom_offset: int, scale: int}
+    overlay_settings: Optional[dict] = None  # {y_position: int, scale: int}
 
 class CampaignResponse(BaseModel):
     message: str
@@ -98,3 +98,4 @@ class VideoBulkDesignUpdate(BaseModel):
     video_ids: List[int]
     subtitle_style: Optional[dict] = None
     overlay_id: Optional[int] = None
+    overlay_settings: Optional[dict] = None

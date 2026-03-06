@@ -458,7 +458,11 @@ const Dashboard = () => {
                 body: JSON.stringify({
                     video_ids: eligibleVideos.map(v => v.id),
                     subtitle_style: subtitle_style_payload,
-                    overlay_id: overlayDesign.selected_id
+                    overlay_id: overlayDesign.selected_id,
+                    overlay_settings: {
+                        scale: overlayDesign.scale,
+                        y_position: overlayDesign.y_position
+                    }
                 }),
             });
             if (res.ok) {
