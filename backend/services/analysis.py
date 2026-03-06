@@ -16,6 +16,14 @@ class AnalysisService:
         api_key    = os.getenv("GOOGLE_API_KEY")
         credentials_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
 
+        # Automatically extract project_id from credentials JSON if missing in environment
+        if not project_id and credentials_json:
+            try:
+                creds_info = json.loads(credentials_json)
+                project_id = creds_info.get("project_id")
+            except:
+                pass
+
         self.vertex_client = None
         self.studio_client = None
         self.vertex_model_id = "gemini-2.0-flash"
@@ -60,7 +68,8 @@ class AnalysisService:
             return {
                 "is_product": True,
                 "detected_duration": 13.0,
-                "script": "Этот девайс изменит твою жизнь. Стильный гаджет для ежедневного использования."
+                "script": "Ошибка активации AI: Недостаточно настроек (GOOGLE_CLOUD_PROJECT или GOOGLE_API_KEY)",
+                "product_info": "Ошибка конфигурации AI"
             }
 
         prompt = """
