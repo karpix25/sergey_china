@@ -1,9 +1,6 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
-    container_name: tiktok_backend
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -15,8 +12,6 @@ services:
     volumes:
       - ./backend:/app
       - ./outputs:/app/outputs
-    ports:
-      - "8000:8000"
 
   frontend:
     build:
@@ -24,10 +19,7 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_INTERNAL_API_KEY=${INTERNAL_API_KEY}
-    container_name: tiktok_frontend
     restart: always
-    ports:
-      - "5173:80"
     stdin_open: true
     tty: true
     volumes:
