@@ -205,7 +205,28 @@ class VideoProcessor:
         
         # Apply subtitles if provided — convert frontend keys to ASS format
         if subtitles_path:
-            abs_subs_path = os.path.abspath(subtitles_path)
+            # Handle speed adjustment for subtitles if audio is being sped up
+            final_srt_path = subtitles_path
+            if target_duration:
+                try:
+                    from services.subtitles import subtitle_service
+                    with open(subtitles_path, 'r', encoding='utf-8') as f:
+                        srt_content = f.read()
+                    
+                    probe_audio = ffmpeg.probe(audio_path)
+                    current_audio_dur = float(probe_audio['format']['duration'])
+                    speed_factor = current_audio_dur / target_duration
+                    
+                    if speed_factor != 1.0:
+                        adjusted_srt = subtitle_service.adjust_srt_speed(srt_content, speed_factor)
+                        adjusted_path = subtitles_path.replace(".srt", "_adjusted.srt")
+                        subtitle_service.save_srt(adjusted_srt, adjusted_path)
+                        final_srt_path = adjusted_path
+                        logger.info("  - Subtitles adjusted for speed factor %.2f", speed_factor)
+                except Exception as e:
+                    logger.warning("Failed to adjust SRT speed: %s", e)
+
+            abs_subs_path = os.path.abspath(final_srt_path)
             ass_style = self._convert_frontend_subtitle_style(subtitle_style)
             style_str = self._build_style_string(ass_style)
             video_stream = video_stream.filter('subtitles', abs_subs_path, force_style=style_str)

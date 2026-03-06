@@ -393,9 +393,10 @@ async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, ov
                 final_local = video_processor.merge_audio_and_overlay(
                     video_path=local_raw,
                     audio_path=local_audio,
-                    srt_path=local_srt,
+                    subtitles_path=local_srt,
                     subtitle_style=subtitle_style,
-                    overlay_path=overlay.file_path if overlay else None
+                    overlay_path=overlay.file_path if overlay else None,
+                    target_duration=video.duration
                 )
 
                 # 3. Upload new version

@@ -39,10 +39,19 @@ class SubtitleService:
         if in_word:
             words.append(current_word)
             
+        # Prepare words with continuous timing (end = next start)
+        continuous_words = []
+        for i in range(len(words)):
+            w = words[i].copy()
+            if i < len(words) - 1:
+                # Set end of current to start of next to avoid "blinking"
+                w["end"] = words[i+1]["start"]
+            continuous_words.append(w)
+
         # Group words into subtitle chunks
         srt_lines = []
-        for i in range(0, len(words), words_per_chunk):
-            chunk = words[i:i + words_per_chunk]
+        for i in range(0, len(continuous_words), words_per_chunk):
+            chunk = continuous_words[i:i + words_per_chunk]
             if not chunk: continue
             
             chunk_index = (i // words_per_chunk) + 1
@@ -56,6 +65,22 @@ class SubtitleService:
             srt_lines.append("")
             
         return "\n".join(srt_lines)
+
+    def adjust_srt_speed(self, srt_content: str, speed_factor: float) -> str:
+        """Scales all timestamps in SRT content by 1/speed_factor (speeding up = shorter times)."""
+        if speed_factor == 1.0 or not srt_content:
+            return srt_content
+        
+        import re
+        def scale_time(ts_match):
+            h, m, s, ms = map(int, re.split('[:|,]', ts_match.group(0)))
+            total_seconds = h * 3600 + m * 60 + s + ms / 1000.0
+            new_seconds = total_seconds / speed_factor
+            return self.format_timestamp(new_seconds)
+
+        # Pattern matches e.g., 00:00:01,234
+        timestamp_pattern = r'\d{2}:\d{2}:\d{2},\d{3}'
+        return re.sub(timestamp_pattern, scale_time, srt_content)
 
     def save_srt(self, srt_content: str, output_path: str):
         with open(output_path, 'w', encoding='utf-8') as f:
