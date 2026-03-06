@@ -47,6 +47,11 @@ class AudioService:
         if not self.client:
             return "outputs/mock_audio.mp3", {"characters": list(text), "character_start_times_seconds": [0.1*i for i in range(len(text))], "character_end_times_seconds": [0.1*(i+1) for i in range(len(text))]}
 
+        if not hasattr(self.client.text_to_speech, 'convert_with_timestamps'):
+            import elevenlabs
+            logger.error("ElevenLabs client (%s) missing convert_with_timestamps. Using fallback.", getattr(elevenlabs, '__version__', 'unknown'))
+            return "outputs/mock_audio.mp3", {"characters": list(text), "character_start_times_seconds": [0.1*i for i in range(len(text))], "character_end_times_seconds": [0.1*(i+1) for i in range(len(text))]}
+
         import base64
         response = self.client.text_to_speech.convert_with_timestamps(
             voice_id=voice_id,
