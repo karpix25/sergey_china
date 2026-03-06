@@ -24,22 +24,7 @@ from routes.queue import router as queue_router
 from routes.telegram import router as telegram_router
 from routes.activity import router as activity_router
 
-# ─── Security Configuration ───
-API_KEY_NAME = "X-Internal-API-Key"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
-
-def get_api_key(api_key: str = Security(api_key_header)):
-    expected_key = os.getenv("INTERNAL_API_KEY")
-    if not expected_key:
-        return None # Allow access if no key is set (optional safety/dev mode)
-    
-    if api_key == expected_key:
-        return api_key
-    
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-    )
+from helpers.auth import get_api_key
 
 # ─── Suppress noisy polling endpoints from access logs ───
 class PollFilterLog(logging.Filter):

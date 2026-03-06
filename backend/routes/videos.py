@@ -18,6 +18,7 @@ from services.audio import audio_service
 from services.storage import storage_service
 from services.subtitles import subtitle_service
 from services.video import video_processor
+from helpers.auth import get_api_key
 
 logger = logging.getLogger(__name__)
 
