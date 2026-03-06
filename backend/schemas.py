@@ -24,6 +24,8 @@ class VideoResponse(BaseModel):
     script: Optional[str]
     description: Optional[str]
     product_info: Optional[str]
+    voice_gcs_path: Optional[str]
+    srt_gcs_path: Optional[str]
     processed_video_path: Optional[str]
     gcs_path: Optional[str]
     local_video_path: Optional[str]
@@ -91,3 +93,8 @@ class ActivityLogResponse(BaseModel):
 
 class VideoBulkDescriptionUpdate(BaseModel):
     description: str
+
+class VideoBulkDesignUpdate(BaseModel):
+    video_ids: List[int]
+    subtitle_style: Optional[dict] = None
+    overlay_id: Optional[int] = None

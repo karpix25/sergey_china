@@ -34,6 +34,9 @@ class Video(Base):
     description = Column(Text, nullable=True)     # Final post text
     product_info = Column(Text, nullable=True)    # Catchy product summary from analysis
     
+    voice_gcs_path = Column(String, nullable=True) # Stored audio (mp3)
+    srt_gcs_path = Column(String, nullable=True)   # Stored subtitles (srt)
+    
     processed_video_path = Column(String, nullable=True)  # GCS URI (gs://...)
     local_video_path = Column(String, nullable=True)      # Local path served via /outputs
     

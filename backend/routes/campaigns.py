@@ -196,8 +196,16 @@ async def _process_campaign_inner(
                         srt_content = subtitle_service.alignments_to_srt(alignment, words_per_chunk=wpc)
                         srt_path = audio_path.replace(".mp3", ".srt")
                         subtitle_service.save_srt(srt_content, srt_path)
+                        
+                        # Upload to GCS for future UI updates
+                        video.voice_gcs_path = storage_service.upload_from_filename(audio_path, f"audio/{video.tiktok_id}.mp3")
+                        video.srt_gcs_path = storage_service.upload_from_filename(srt_path, f"srt/{video.tiktok_id}.srt")
+                        db.commit()
                     else:
                         audio_path = audio_service.generate_speech(current_script)
+                        video.voice_gcs_path = storage_service.upload_from_filename(audio_path, f"audio/{video.tiktok_id}.mp3")
+                        video.srt_gcs_path = None
+                        db.commit()
                         srt_path = None
 
                     audio_dur = audio_service.get_duration(audio_path)

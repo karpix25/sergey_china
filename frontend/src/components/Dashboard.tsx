@@ -42,6 +42,7 @@ const Dashboard = () => {
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [uploadUploading, setUploadUploading] = useState(false);
     const [bulkDescriptionUpdating, setBulkDescriptionUpdating] = useState(false);
+    const [bulkDesignUpdating, setBulkDesignUpdating] = useState(false);
 
 
     // Subtitle settings state with localStorage persistence
@@ -423,6 +424,55 @@ const Dashboard = () => {
         finally { setBulkDescriptionUpdating(false); }
     };
 
+    const handleBulkUpdateDesign = async () => {
+        // Collect videos that have voiceover in GCS
+        const eligibleVideos = videos.filter(v => v.voice_gcs_path && v.status !== 'failed');
+        if (eligibleVideos.length === 0) {
+            alert("Нет видео для обновления (нужны ролики с уже созданной озвучкой).");
+            return;
+        }
+
+        if (!window.confirm(`Обновить дизайн (субтитры и плашку) для ${eligibleVideos.length} видео? Ролики будут пересоберены с текущими настройками.`)) {
+            return;
+        }
+
+        setBulkDesignUpdating(true);
+        try {
+            const subtitle_style_payload: any = {
+                preset: subtitles.preset || 'classic',
+            };
+            if (subtitles.use_custom_styles) {
+                subtitle_style_payload.font_size = subtitles.font_size;
+                subtitle_style_payload.primary_color = subtitles.primary_color;
+                subtitle_style_payload.has_outline = subtitles.has_outline;
+                subtitle_style_payload.outline_color = subtitles.outline_color;
+                subtitle_style_payload.vertical_position = subtitles.vertical_position;
+            }
+
+            const res = await fetch(`${API}/api/videos/bulk-update-style`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Internal-API-Key': INTERNAL_API_KEY
+                },
+                body: JSON.stringify({
+                    video_ids: eligibleVideos.map(v => v.id),
+                    subtitle_style: subtitle_style_payload,
+                    overlay_id: overlayDesign.selected_id
+                }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                fetchVideos();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch { alert('Ошибка соединения'); }
+        finally { setBulkDesignUpdating(false); }
+    };
+
 
     const handleOverlayUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
@@ -737,6 +787,16 @@ const Dashboard = () => {
                                 >
                                     {bulkDescriptionUpdating ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Layers className="mr-1 h-3 w-3" />}
                                     Применить описание ко всем готовым
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleBulkUpdateDesign}
+                                    disabled={bulkDesignUpdating}
+                                    className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 text-xs"
+                                >
+                                    {bulkDesignUpdating ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <RotateCcw className="mr-1 h-3 w-3" />}
+                                    Применить дизайн ко всем готовым
                                 </Button>
                             </div>
                         </div>
