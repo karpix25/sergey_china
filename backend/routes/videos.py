@@ -40,7 +40,7 @@ async def get_video_status(video_id: int, db: Session = Depends(get_db)):
     return {"status": video.status, "processed_video_path": video.processed_video_path}
 
 
-@router.get("/", response_model=List[schemas.VideoResponse])
+@router.get("", response_model=List[schemas.VideoResponse])
 async def list_videos(db: Session = Depends(get_db)):
     return db.query(models.Video).order_by(models.Video.created_at.desc()).all()
 
@@ -366,7 +366,7 @@ async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, ov
     db = SessionLocal()
     try:
         from services.storage import storage_service
-        from services.video_processor import video_processor
+        from services.video import video_processor
         from helpers.logging import log_activity
 
         overlay = None
