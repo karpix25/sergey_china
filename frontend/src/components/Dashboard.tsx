@@ -9,7 +9,7 @@ import { Video, Search, Plus, Play, CheckCircle2, AlertCircle, Loader2, X, Downl
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const INTERNAL_API_KEY = 'hNRAKvDFPcpeJICTfpgPqcHFodRW5Kbd4vjTHRPlMTg';
+const INTERNAL_API_KEY = import.meta.env.VITE_INTERNAL_API_KEY || 'hNRAKvDFPcpeJICTfpgPqcHFodRW5Kbd4vjTHRPlMTg';
 
 const Dashboard = () => {
     // ... rest of the component
