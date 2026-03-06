@@ -22,7 +22,7 @@ from helpers.auth import get_api_key
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/videos")
 
 # ── Processing queue: max 2 concurrent video processing tasks ──
 _processing_semaphore = asyncio.Semaphore(2)
@@ -40,12 +40,12 @@ async def get_video_status(video_id: int, db: Session = Depends(get_db)):
     return {"status": video.status, "processed_video_path": video.processed_video_path}
 
 
-@router.get("/videos", response_model=List[schemas.VideoResponse])
+@router.get("/", response_model=List[schemas.VideoResponse])
 async def list_videos(db: Session = Depends(get_db)):
     return db.query(models.Video).order_by(models.Video.created_at.desc()).all()
 
 
-@router.delete("/videos/all")
+@router.delete("/all")
 async def delete_all_videos(db: Session = Depends(get_db)):
     try:
         db.query(models.ActivityLog).filter(
@@ -59,7 +59,7 @@ async def delete_all_videos(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.patch("/videos/{video_id}/status")
+@router.patch("/{video_id}/status")
 async def update_video_status(video_id: int, body: dict, db: Session = Depends(get_db)):
     """
     Вручную изменить статус видео.
@@ -92,7 +92,7 @@ async def update_video_status(video_id: int, body: dict, db: Session = Depends(g
         "published_at": video.published_at.isoformat() if video.published_at else None,
     }
 
-@router.patch("/videos/bulk-update-description")
+@router.patch("/bulk-update-description")
 async def bulk_update_description(
     body: schemas.VideoBulkDescriptionUpdate,
     background_tasks: BackgroundTasks,
@@ -152,7 +152,7 @@ async def _run_bulk_description_update(video_ids: List[int], new_base_descriptio
 #  UPLOAD OWN VIDEO
 # ─────────────────────────────────────────────
 
-@router.post("/videos/upload")
+@router.post("/upload")
 async def upload_video(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
