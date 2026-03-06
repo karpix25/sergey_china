@@ -27,7 +27,7 @@ async def download_video(url: str, dest_path: str, retries: int = 3) -> int:
     for attempt in range(retries):
         try:
             async with httpx.AsyncClient(
-                timeout=60.0,
+                timeout=httpx.Timeout(120.0, connect=30.0, read=120.0, write=30.0),
                 follow_redirects=True,
                 headers=TIKTOK_HEADERS,
             ) as client:

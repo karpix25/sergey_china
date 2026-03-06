@@ -38,7 +38,8 @@ class StorageService:
             return f"local://{source_file_name}"  # Fallback for local testing without GCS
 
         blob = self.bucket.blob(destination_blob_name)
-        blob.upload_from_filename(source_file_name)
+        # Add timeout to handle large files and unstable networks
+        blob.upload_from_filename(source_file_name, timeout=300)
         gcs_uri = f"gs://{self.bucket_name}/{destination_blob_name}"
         print(f"  GCS upload: {source_file_name} → {gcs_uri}")
         return gcs_uri

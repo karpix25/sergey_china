@@ -32,7 +32,7 @@ class ScraperService:
                 
                 try:
                     print(f"Scraper: Requesting {params['count']} videos (cursor: {cursor})...")
-                    response = await client.get(url, params=params, headers=headers, timeout=30.0)
+                    response = await client.get(url, params=params, headers=headers, timeout=60.0)
                     response.raise_for_status()
                     data = response.json()
                     
