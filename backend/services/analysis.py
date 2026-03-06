@@ -18,8 +18,8 @@ class AnalysisService:
 
         self.vertex_client = None
         self.studio_client = None
-        self.vertex_model_id = "gemini-2.5-flash"
-        self.studio_model_id = "models/gemini-2.5-flash"
+        self.vertex_model_id = "gemini-2.0-flash"
+        self.studio_model_id = "models/gemini-2.0-flash"
 
         # 1. Try to set up Vertex AI
         if project_id:
