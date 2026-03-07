@@ -358,8 +358,8 @@ async def bulk_update_style(
     api_key: str = Depends(get_api_key)
 ):
     """Массовое обновление дизайна (субтитры, плашки) для существующих видео."""
-    background_tasks.add_task(
-        _run_bulk_design_update,
+    from tasks import bulk_design_update_task
+    bulk_design_update_task.delay(
         update.video_ids, 
         update.subtitle_style,
         update.overlay_id,
@@ -367,62 +367,3 @@ async def bulk_update_style(
         update.audio_settings
     )
     return {"message": f"Запущено обновление дизайна для {len(update.video_ids)} видео"}
-
-async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, overlay_id: int, overlay_settings: Optional[dict] = None, audio_settings: Optional[dict] = None):
-    """Фоновая задача для пересборки видео с новым дизайном."""
-    db = SessionLocal()
-    try:
-        from services.storage import storage_service
-        from services.video import video_processor
-        from helpers.logging import log_activity
-
-        overlay = None
-        if overlay_id:
-            overlay = db.query(models.Overlay).get(overlay_id)
-
-        for vid in video_ids:
-            video = db.query(models.Video).get(vid)
-            # We need both raw video and voiceover to re-render
-            if not video or not video.gcs_path or not video.voice_gcs_path:
-                logger.warning("Skipping bulk design update for video %s: Missing GCS assets", vid)
-                continue
-
-            try:
-                logger.info("Re-rendering video %s with new design", video.tiktok_id)
-                # 1. Download necessary assets
-                local_raw = storage_service.download_to_local(video.gcs_path)
-                local_audio = storage_service.download_to_local(video.voice_gcs_path)
-                local_srt = None
-                if video.srt_gcs_path:
-                    local_srt = storage_service.download_to_local(video.srt_gcs_path)
-
-                # 2. Re-merge with new style
-                final_local = video_processor.merge_audio_and_overlay(
-                    video_path=local_raw,
-                    audio_path=local_audio,
-                    subtitles_path=local_srt,
-                    subtitle_style=subtitle_style,
-                    overlay_path=overlay.file_path if overlay else None,
-                    target_duration=video.duration,
-                    overlay_settings=overlay_settings,
-                    audio_settings=audio_settings
-                )
-
-                # 3. Upload new version
-                video.processed_video_path = storage_service.upload_from_filename(
-                    final_local, f"processed/{video.tiktok_id}.mp4"
-                )
-                video.status = "merged"
-                db.commit()
-                
-                log_activity(db, video.profile_id, f"Дизайн видео {video.tiktok_id} обновлен", "success", video_id=video.id)
-                
-                # Cleanup
-                cleanup_local_files(local_raw, local_audio, final_local, local_srt)
-
-            except Exception as e:
-                logger.error("Failed to update design for video %d: %s", vid, e)
-                log_activity(db, video.profile_id, f"Ошибка обновления дизайна {video.tiktok_id}: {str(e)}", "error", video_id=video.id)
-
-    finally:
-        db.close()

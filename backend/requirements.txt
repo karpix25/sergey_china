@@ -17,3 +17,6 @@ apscheduler
 requests
 tenacity
 ffmpeg-python==0.2.0
+celery==5.4.0
+redis==5.0.4
+flower==2.0.1

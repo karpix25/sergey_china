@@ -1,17 +1,44 @@
 services:
+  redis:
+    image: redis:alpine
+    restart: always
+
   backend:
     build: ./backend
     restart: always
     environment:
+      - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=${DATABASE_URL}
       - SCRAPE_CREATORS_API_KEY=${SCRAPE_CREATORS_API_KEY}
       - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/app/google-credentials.json}
       - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
       - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
     volumes:
       - ./backend:/app
       - ./outputs:/app/outputs
+    depends_on:
+      - redis
+
+  worker:
+    build: ./backend
+    command: celery -A celery_app worker --loglevel=info --concurrency=1
+    restart: always
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+      - SCRAPE_CREATORS_API_KEY=${SCRAPE_CREATORS_API_KEY}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-/app/google-credentials.json}
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+    volumes:
+      - ./backend:/app
+      - ./outputs:/app/outputs
+    depends_on:
+      - redis
 
   frontend:
     build:
