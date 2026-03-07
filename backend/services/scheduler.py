@@ -356,6 +356,7 @@ def _resolve_video_url(video, storage_service) -> str | None:
 
 def start_scheduler():
     """Запускает планировщик. Вызывается из main.py при старте приложения."""
+    # Запуск СРАЗУ при старте + каждые 1 мин
     scheduler.add_job(
         _run_autopublish,
         trigger=IntervalTrigger(minutes=1),
@@ -363,9 +364,10 @@ def start_scheduler():
         name="Autopublish Videos (Smart Spacing)",
         replace_existing=True,
         max_instances=1,
+        next_run_time=datetime.datetime.now() # Run immediately
     )
     scheduler.start()
-    logger.info("[Scheduler] Smart autopublish scheduler started (checks every minute).")
+    logger.info("[Scheduler] Smart autopublish scheduler started (immediate first run).")
 
 
 def stop_scheduler():

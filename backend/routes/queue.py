@@ -2,7 +2,7 @@
 import logging
 import random
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import models
@@ -114,3 +114,14 @@ async def interleave_global_queue(db: Session = Depends(get_db)):
         "message": f"Вкраплено {len(upload_vids)} загруженных видео среди {len(tiktok_vids)} парсенных",
         "count": len(result),
     }
+
+@router.post("/trigger-scheduler")
+async def trigger_scheduler(db: Session = Depends(get_db)):
+    """Вручную запустить цикл планировщика (для отладки)."""
+    try:
+        from services.scheduler import _run_autopublish
+        await _run_autopublish()
+        return {"status": "triggered"}
+    except Exception as e:
+        logger.exception("Manual trigger failed")
+        raise HTTPException(status_code=500, detail=str(e))
