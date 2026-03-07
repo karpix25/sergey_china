@@ -10,6 +10,16 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from fastapi.responses import RedirectResponse
 
+# Configure logging early
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
+# Load .env
+
 # Load .env
 load_dotenv("../.env")
 load_dotenv() 

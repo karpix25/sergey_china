@@ -112,9 +112,22 @@ async def _run_autopublish():
     from helpers.logging import log_activity
 
     db = SessionLocal()
+    logger.info("[Scheduler] _run_autopublish loop started")
     try:
         now_utc = datetime.datetime.utcnow()
         today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # 0. Диагностика очереди
+        assigned_video_ids = db.query(models.VideoPublishLog.video_id).subquery()
+        ready_videos_count = (
+            db.query(models.Video)
+            .filter(
+                models.Video.status == "merged",
+                ~models.Video.id.in_(assigned_video_ids)
+            )
+            .count()
+        )
+        logger.info("[Scheduler] Diagnostic: Ready unassigned videos count = %d", ready_videos_count)
 
         # Все активные направления публикации
         destinations = (
@@ -124,7 +137,10 @@ async def _run_autopublish():
         )
 
         if not destinations:
+            logger.info("[Scheduler] No active destinations found.")
             return
+        
+        logger.info("[Scheduler] Found %d active destinations", len(destinations))
 
         for dest in destinations:
             platforms = dest.platforms or []
