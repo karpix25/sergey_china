@@ -19,6 +19,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 scheduler = AsyncIOScheduler()
 
@@ -108,6 +109,7 @@ async def _run_autopublish():
     from services.uploadpost import uploadpost_service
     from services.storage import storage_service
     from services.telegram_sender import send_video_to_telegram
+    from helpers.logging import log_activity
 
     db = SessionLocal()
     try:
@@ -146,6 +148,7 @@ async def _run_autopublish():
                 in_window = True
 
             if not in_window:
+                logger.debug("[Scheduler] Destination %s: outside window (%s - %s)", dest.name, window_start_str, window_end_str)
                 continue
 
             # ── 2. Считаем публикации за сегодня для ЭТОГО профиля ──
@@ -251,6 +254,7 @@ async def _run_autopublish():
                 chat_id = dest.telegram_chat_id or os.environ.get("TELEGRAM_CHAT_ID")
                 
                 logger.info("[Scheduler] Telegram Mode for %s: sending to chat %s", dest.name, chat_id)
+                log_activity(db, None, f"[Auto] Отправка видео {video.tiktok_id} в Telegram", "info", video_id=video.id)
                 result = await send_video_to_telegram(
                     bot_token=bot_token,
                     chat_id=chat_id,
@@ -277,6 +281,7 @@ async def _run_autopublish():
                         youtube_category_id=dest.youtube_category_id or "22",
                         instagram_media_type=dest.instagram_media_type or "REELS",
                     )
+                log_activity(db, None, f"[Auto] Отправка видео {video.tiktok_id} через Upload-Post", "info", video_id=video.id)
 
             if result.get("success"):
                 pub_log.status = "published"
@@ -287,6 +292,7 @@ async def _run_autopublish():
                     video.tiktok_id, dest.name,
                     datetime.datetime.utcnow().strftime("%H:%M:%S")
                 )
+                log_activity(db, None, f"✅ Видео {video.tiktok_id} успешно опубликовано ({dest.publish_mode})", "success", video_id=video.id)
             else:
                 pub_log.status = "failed"
                 pub_log.error_message = result.get("error", "Unknown error")
@@ -295,6 +301,7 @@ async def _run_autopublish():
                     "[Scheduler] ❌ Video %s publish to %s failed: %s",
                     video.tiktok_id, dest.name, result.get("error"),
                 )
+                log_activity(db, None, f"❌ Ошибка публикации {video.tiktok_id}: {result.get('error')}", "error", video_id=video.id)
 
     except Exception as e:
         logger.exception("[Scheduler] Unexpected error: %s", e)

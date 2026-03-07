@@ -111,6 +111,13 @@ os.makedirs("storage/cta_plates", exist_ok=True)
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
 
+# Apply security to static files (via middleware or wrap)
+# Actually, standard way is to use a route that checks auth then returns FileResponse, 
+# but for now we applied query param auth to get_api_key.
+# To keep it simple and consistent with how frontend uses it (?api_key=...), 
+# we can use a custom middleware or just keep them as-is if 401s elsewhere are the main pain.
+# Given they were getting 401s on /stream and /url, let's fix those first.
+
 @app.get("/api/storage/url")
 async def get_storage_url(gs_uri: str, download: int = 0, authenticated: str = Depends(get_api_key)):
     from services.storage import storage_service

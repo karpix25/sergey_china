@@ -581,12 +581,12 @@ const Dashboard = () => {
             const cleanPath = video.local_video_path.replace(/^\/+/, '');
             // Check it's not a GCS path
             if (!cleanPath.startsWith('gs://') && !cleanPath.startsWith('local://')) {
-                return `${API}/${cleanPath}`;
+                return `${API}/${cleanPath}?api_key=${INTERNAL_API_KEY}`;
             }
         }
         // GCS: use stream endpoint that returns a signed URL
         if (video.processed_video_path?.startsWith('gs://') || video.gcs_path?.startsWith('gs://')) {
-            return `${API}/api/videos/${video.id}/stream`;
+            return `${API}/api/videos/${video.id}/stream?api_key=${INTERNAL_API_KEY}`;
         }
         return null;
     };
@@ -595,7 +595,7 @@ const Dashboard = () => {
     const getDownloadUrl = (video: any): string | null => {
         const url = getVideoUrl(video);
         if (url && url.includes('/stream')) {
-            return `${url}?download=1`;
+            return `${url}&download=1`;
         }
         return url;
     };
@@ -603,7 +603,7 @@ const Dashboard = () => {
     // Get thumbnail URL: prefer GCS-cached cover if available, then direct TikTok link
     const getThumbnailUrl = (video: any): string | null => {
         if (video.thumbnail_url?.startsWith('gs://')) {
-            return `${API}/api/storage/url?gs_uri=${encodeURIComponent(video.thumbnail_url)}`;
+            return `${API}/api/storage/url?gs_uri=${encodeURIComponent(video.thumbnail_url)}&api_key=${INTERNAL_API_KEY}`;
         }
         return video.thumbnail_url || null;
     };
