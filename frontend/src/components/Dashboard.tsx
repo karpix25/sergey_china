@@ -140,23 +140,29 @@ const Dashboard = () => {
     React.useEffect(() => {
         startPolling();
 
-        // Load ENV status for autopublish indicator
-        fetch(`${API}/api/autopublish/status`)
-            .then(r => r.ok ? r.json() : null)
-            .then(d => d && setEnvStatus(d))
-            .catch(() => { });
-
         return () => {
             if (pollingInterval.current) clearInterval(pollingInterval.current);
         };
     }, [startPolling]);
+
+    // Load ENV status for autopublish indicator
+    React.useEffect(() => {
+        fetch(`${API}/api/autopublish/status`, {
+            headers: { 'X-Internal-API-Key': INTERNAL_API_KEY }
+        })
+            .then(res => res.ok ? res.json() : null)
+            .then(d => d && setEnvStatus(d))
+            .catch(err => console.error("Failed to fetch env status:", err));
+    }, []);
 
     const fetchActivity = async () => {
         try {
             const endpoint = currentProfileId
                 ? `${API}/api/activity/${currentProfileId}`
                 : `${API}/api/activity`;
-            const response = await fetch(endpoint);
+            const response = await fetch(endpoint, {
+                headers: { 'X-Internal-API-Key': INTERNAL_API_KEY }
+            });
             if (response.ok) {
                 const data = await response.json();
                 setActivityLogs(data);
@@ -1260,7 +1266,10 @@ const Dashboard = () => {
                                                 className="flex-1 border-purple-700 text-purple-400 hover:bg-purple-900/30 hover:text-purple-300 text-xs"
                                                 onClick={async () => {
                                                     try {
-                                                        await fetch(`${API}/api/videos/global-queue/shuffle`, { method: 'POST' });
+                                                        await fetch(`${API}/api/videos/global-queue/shuffle`, {
+                                                            method: 'POST',
+                                                            headers: { 'X-Internal-API-Key': INTERNAL_API_KEY }
+                                                        });
                                                         fetchGlobalQueue();
                                                     } catch { alert('Ошибка соединения'); }
                                                 }}
@@ -1272,7 +1281,10 @@ const Dashboard = () => {
                                                 className="flex-1 border-cyan-700 text-cyan-400 hover:bg-cyan-900/30 hover:text-cyan-300 text-xs"
                                                 onClick={async () => {
                                                     try {
-                                                        await fetch(`${API}/api/videos/global-queue/interleave`, { method: 'POST' });
+                                                        await fetch(`${API}/api/videos/global-queue/interleave`, {
+                                                            method: 'POST',
+                                                            headers: { 'X-Internal-API-Key': INTERNAL_API_KEY }
+                                                        });
                                                         fetchGlobalQueue();
                                                     } catch { alert('Ошибка соединения'); }
                                                 }}

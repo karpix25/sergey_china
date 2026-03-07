@@ -64,6 +64,7 @@ def run_startup_migrations():
         "ALTER TABLE uploadpost_destinations ADD COLUMN IF NOT EXISTS telegram_bot_token VARCHAR",
         "ALTER TABLE uploadpost_destinations ADD COLUMN IF NOT EXISTS telegram_chat_id VARCHAR",
         "ALTER TABLE uploadpost_destinations ADD COLUMN IF NOT EXISTS uploadpost_profiles JSON DEFAULT '[]'",
+        "ALTER TABLE uploadpost_destinations DROP COLUMN IF EXISTS uploadpost_profile",
     ]
     try:
         with engine.connect() as conn:
