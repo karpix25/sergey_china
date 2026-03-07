@@ -363,11 +363,12 @@ async def bulk_update_style(
         update.video_ids, 
         update.subtitle_style,
         update.overlay_id,
-        update.overlay_settings
+        update.overlay_settings,
+        update.audio_settings
     )
     return {"message": f"Запущено обновление дизайна для {len(update.video_ids)} видео"}
 
-async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, overlay_id: int, overlay_settings: Optional[dict] = None):
+async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, overlay_id: int, overlay_settings: Optional[dict] = None, audio_settings: Optional[dict] = None):
     """Фоновая задача для пересборки видео с новым дизайном."""
     db = SessionLocal()
     try:
@@ -403,7 +404,8 @@ async def _run_bulk_design_update(video_ids: List[int], subtitle_style: dict, ov
                     subtitle_style=subtitle_style,
                     overlay_path=overlay.file_path if overlay else None,
                     target_duration=video.duration,
-                    overlay_settings=overlay_settings
+                    overlay_settings=overlay_settings,
+                    audio_settings=audio_settings
                 )
 
                 # 3. Upload new version

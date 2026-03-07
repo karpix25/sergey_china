@@ -9,6 +9,7 @@ class CampaignCreate(BaseModel):
     enable_subtitles: bool = True
     subtitle_style: Optional[dict] = None
     overlay_settings: Optional[dict] = None  # {y_position: int, scale: int}
+    audio_settings: Optional[dict] = None    # {original_volume: float, voiceover_volume: float}
 
 class CampaignResponse(BaseModel):
     message: str
@@ -99,3 +100,4 @@ class VideoBulkDesignUpdate(BaseModel):
     subtitle_style: Optional[dict] = None
     overlay_id: Optional[int] = None
     overlay_settings: Optional[dict] = None
+    audio_settings: Optional[dict] = None

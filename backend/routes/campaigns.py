@@ -54,6 +54,7 @@ async def create_campaign(
         process_campaign,
         profile.id, req.video_count, req.base_description,
         req.enable_subtitles, req.subtitle_style, req.overlay_settings,
+        req.audio_settings,
     )
     return {"message": "Campaign started", "profile_id": profile.id}
 

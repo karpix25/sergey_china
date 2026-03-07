@@ -176,7 +176,7 @@ class VideoProcessor:
 
         return ffmpeg.overlay(video_stream, overlay_scaled, x=x_expr, y=y_expr)
 
-    def merge_audio_and_overlay(self, video_path: str, audio_path: str, overlay_path: Optional[str] = None, target_duration: Optional[float] = None, subtitles_path: Optional[str] = None, subtitle_style: Optional[dict] = None, overlay_settings: Optional[dict] = None) -> str:
+    def merge_audio_and_overlay(self, video_path: str, audio_path: str, overlay_path: Optional[str] = None, target_duration: Optional[float] = None, subtitles_path: Optional[str] = None, subtitle_style: Optional[dict] = None, overlay_settings: Optional[dict] = None, audio_settings: Optional[dict] = None) -> str:
         output_filename = f"{uuid.uuid4()}.mp4"
         output_path = os.path.join(self.output_dir, output_filename)
         
@@ -187,10 +187,19 @@ class VideoProcessor:
         main_w = int(video_stream_info.get('width', 1080))
         main_h = int(video_stream_info.get('height', 1920))
         
+        # Default volumes: 40% original, 100% voiceover
+        original_vol = 0.4
+        voiceover_vol = 1.0
+        if audio_settings:
+            if 'original_volume' in audio_settings:
+                original_vol = float(audio_settings['original_volume']) / 100.0
+            if 'voiceover_volume' in audio_settings:
+                voiceover_vol = float(audio_settings['voiceover_volume']) / 100.0
+
         video_input = ffmpeg.input(video_path)
-        original_audio = video_input.audio.filter('volume', 0.4) # Original at 40%
+        original_audio = video_input.audio.filter('volume', original_vol)
         voiceover_input = ffmpeg.input(audio_path)
-        voiceover_audio = voiceover_input.audio.filter('volume', 1.0) # Voiceover at 100%
+        voiceover_audio = voiceover_input.audio.filter('volume', voiceover_vol)
         
         if target_duration:
             probe = ffmpeg.probe(audio_path)

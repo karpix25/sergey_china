@@ -97,13 +97,25 @@ const Dashboard = () => {
         }
     });
 
-    // Save subtitles and overlay design to localStorage when they change
+    // Audio volume state with localStorage persistence
+    const [audioSettings, setAudioSettings] = useState(() => {
+        try {
+            const saved = localStorage.getItem('audio_settings');
+            return saved ? JSON.parse(saved) : {
+                original_volume: 40,
+                voiceover_volume: 100,
+            };
+        } catch (e) {
+            return { original_volume: 40, voiceover_volume: 100 };
+        }
+    });
+
+    // Save subtitles, overlay design, and audio settings to localStorage when they change
     React.useEffect(() => {
         localStorage.setItem('subtitle_settings', JSON.stringify(subtitles));
-    }, [subtitles]);
-    React.useEffect(() => {
         localStorage.setItem('overlay_design_settings', JSON.stringify(overlayDesign));
-    }, [overlayDesign]);
+        localStorage.setItem('audio_settings', JSON.stringify(audioSettings));
+    }, [subtitles, overlayDesign, audioSettings]);
 
     // Use stable refs for polling functions to avoid stale closures in setInterval
     const pollingInterval = React.useRef<any | null>(null);
@@ -238,7 +250,8 @@ const Dashboard = () => {
                     overlay_settings: {
                         y_position: overlayDesign.y_position,
                         scale: overlayDesign.scale,
-                    }
+                    },
+                    audio_settings: audioSettings
                 })
             });
             if (response.ok) {
@@ -462,7 +475,8 @@ const Dashboard = () => {
                     overlay_settings: {
                         scale: overlayDesign.scale,
                         y_position: overlayDesign.y_position
-                    }
+                    },
+                    audio_settings: audioSettings
                 }),
             });
             if (res.ok) {
@@ -1483,6 +1497,45 @@ const Dashboard = () => {
                                             </button>
                                         </div>
 
+                                        {/* ─── Section: Audio Volume ─── */}
+                                        <div className="space-y-4 pt-6 border-t border-slate-800">
+                                            <h4 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Настройки звука</h4>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center text-xs text-slate-400">
+                                                        <span>Громкость оригинала ({audioSettings.original_volume}%)</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="150"
+                                                        step="5"
+                                                        className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                                        value={audioSettings.original_volume}
+                                                        onChange={(e) => setAudioSettings({ ...audioSettings, original_volume: parseInt(e.target.value) })}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <div className="flex justify-between items-center text-xs text-slate-400">
+                                                        <span>Громкость озвучки ({audioSettings.voiceover_volume}%)</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="200"
+                                                        step="5"
+                                                        className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                                        value={audioSettings.voiceover_volume}
+                                                        onChange={(e) => setAudioSettings({ ...audioSettings, voiceover_volume: parseInt(e.target.value) })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Apply to All Button */}
+                                        <div className="pt-6"></div>
                                         {/* Preset cards */}
                                         <div className="grid grid-cols-1 gap-2">
                                             {SUBTITLE_PRESETS.map((preset) => {
