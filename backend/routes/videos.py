@@ -359,6 +359,7 @@ async def bulk_update_style(
 ):
     """Массовое обновление дизайна (субтитры, плашки) для существующих видео."""
     background_tasks.add_task(
+        _run_bulk_design_update,
         update.video_ids, 
         update.subtitle_style,
         update.overlay_id,
