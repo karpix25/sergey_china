@@ -107,6 +107,7 @@ async def _run_autopublish():
     import os
     from services.uploadpost import uploadpost_service
     from services.storage import storage_service
+    from services.telegram_sender import send_video_to_telegram
 
     db = SessionLocal()
     try:
@@ -244,25 +245,38 @@ async def _run_autopublish():
                 db.commit()
                 continue
 
-            # Публикация в Upload-Post для каждого профиля
-            profiles = dest.uploadpost_profiles or []
-            if not profiles:
-                profiles = [""]  # fallback: use ENV profile
-
-            result = None
-            for profile in profiles:
-                result = await uploadpost_service.publish_video(
-                    api_key=None,
-                    uploadpost_profile=profile,
+            # 5. Выбор режима публикации
+            if dest.publish_mode == "telegram":
+                bot_token = dest.telegram_bot_token or os.environ.get("TELEGRAM_BOT_TOKEN")
+                chat_id = dest.telegram_chat_id or os.environ.get("TELEGRAM_CHAT_ID")
+                
+                logger.info("[Scheduler] Telegram Mode for %s: sending to chat %s", dest.name, chat_id)
+                result = await send_video_to_telegram(
+                    bot_token=bot_token,
+                    chat_id=chat_id,
                     video_url=video_url,
-                    title=video.script[:80] if video.script else f"Video {video.tiktok_id}",
-                    description=video.description,
-                    platforms=platforms,
-                    tiktok_privacy=dest.tiktok_privacy or "PUBLIC_TO_EVERYONE",
-                    youtube_privacy=dest.youtube_privacy or "public",
-                    youtube_category_id=dest.youtube_category_id or "22",
-                    instagram_media_type=dest.instagram_media_type or "REELS",
-            )
+                    caption=video.description or f"Video {video.tiktok_id}"
+                )
+            else:
+                # Публикация в Upload-Post для каждого профиля
+                profiles = dest.uploadpost_profiles or []
+                if not profiles:
+                    profiles = [""]  # fallback: use ENV profile
+
+                result = None
+                for profile in profiles:
+                    result = await uploadpost_service.publish_video(
+                        api_key=None,
+                        uploadpost_profile=profile,
+                        video_url=video_url,
+                        title=video.script[:80] if video.script else f"Video {video.tiktok_id}",
+                        description=video.description,
+                        platforms=platforms,
+                        tiktok_privacy=dest.tiktok_privacy or "PUBLIC_TO_EVERYONE",
+                        youtube_privacy=dest.youtube_privacy or "public",
+                        youtube_category_id=dest.youtube_category_id or "22",
+                        instagram_media_type=dest.instagram_media_type or "REELS",
+                    )
 
             if result.get("success"):
                 pub_log.status = "published"

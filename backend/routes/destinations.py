@@ -72,6 +72,8 @@ async def publish_video_now(dest_id: int, video_id: int, db: Session = Depends(g
     """Ручная публикация КОНКРЕТНОГО видео в КОНКРЕТНОЕ направление."""
     from services.uploadpost import uploadpost_service
     from services.scheduler import _resolve_video_url
+    from services.telegram_sender import send_video_to_telegram
+    import os
 
     video = db.query(models.Video).get(video_id)
     if not video:
@@ -91,18 +93,28 @@ async def publish_video_now(dest_id: int, video_id: int, db: Session = Depends(g
     if not video_url:
         raise HTTPException(status_code=400, detail="No video URL available")
 
-    result = await uploadpost_service.publish_video(
-        api_key=None,
-        uploadpost_profile=(dest.uploadpost_profiles or [""])[0],
-        video_url=video_url,
-        title=video.script[:80] if video.script else f"Video {video.tiktok_id}",
-        description=video.description,
-        platforms=platforms,
-        tiktok_privacy=dest.tiktok_privacy,
-        youtube_privacy=dest.youtube_privacy,
-        youtube_category_id=dest.youtube_category_id,
-        instagram_media_type=dest.instagram_media_type,
-    )
+    if dest.publish_mode == "telegram":
+        bot_token = dest.telegram_bot_token or os.environ.get("TELEGRAM_BOT_TOKEN")
+        chat_id = dest.telegram_chat_id or os.environ.get("TELEGRAM_CHAT_ID")
+        result = await send_video_to_telegram(
+            bot_token=bot_token,
+            chat_id=chat_id,
+            video_url=video_url,
+            caption=video.description or f"Video {video.tiktok_id}"
+        )
+    else:
+        result = await uploadpost_service.publish_video(
+            api_key=None,
+            uploadpost_profile=(dest.uploadpost_profiles or [""])[0],
+            video_url=video_url,
+            title=video.script[:80] if video.script else f"Video {video.tiktok_id}",
+            description=video.description,
+            platforms=platforms,
+            tiktok_privacy=dest.tiktok_privacy,
+            youtube_privacy=dest.youtube_privacy,
+            youtube_category_id=dest.youtube_category_id,
+            instagram_media_type=dest.instagram_media_type,
+        )
 
     if result.get("success"):
         pub_log = models.VideoPublishLog(
