@@ -20,7 +20,8 @@ from dotenv import load_dotenv
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-load_dotenv()
+load_dotenv("../.env") # Look in parent dir first (Docker structure)
+load_dotenv()           # Then local
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -274,10 +275,11 @@ async def _run_autopublish():
 
             # 5. Выбор режима публикации
             if dest.publish_mode == "telegram":
-                bot_token = dest.telegram_bot_token or os.environ.get("TELEGRAM_BOT_TOKEN")
-                chat_id = dest.telegram_chat_id or os.environ.get("TELEGRAM_CHAT_ID")
+                bot_token = (dest.telegram_bot_token or "").strip() or os.environ.get("TELEGRAM_BOT_TOKEN")
+                chat_id = (dest.telegram_chat_id or "").strip() or os.environ.get("TELEGRAM_CHAT_ID")
                 
-                logger.info("[Scheduler] Telegram Mode for %s: sending to chat %s", dest.name, chat_id)
+                source = "DB" if (dest.telegram_chat_id or "").strip() else "ENV"
+                logger.info("[Scheduler] Telegram Mode for %s: sending to chat %s (source: %s)", dest.name, chat_id, source)
                 log_activity(db, None, f"[Auto] Отправка видео {video.tiktok_id} в Telegram", "info", video_id=video.id)
                 result = await send_video_to_telegram(
                     bot_token=bot_token,
