@@ -23,6 +23,18 @@ def upgrade_db_schema():
                     # Using raw SQL for ALTER TABLE as it's the simplest way for small tweaks
                     conn.execute(text(f"ALTER TABLE videos ADD COLUMN {col_name} {col_type}"))
             conn.commit()
+
+            # Check video_publish_logs table
+            columns_pub = [c['name'] for c in inspector.get_columns('video_publish_logs')]
+            needed_pub = {
+                'created_at': 'TIMESTAMP',
+                'error_message': 'TEXT'
+            }
+            for col_name, col_type in needed_pub.items():
+                if col_name not in columns_pub:
+                    logger.info(f"Adding missing column '{col_name}' to 'video_publish_logs' table")
+                    conn.execute(text(f"ALTER TABLE video_publish_logs ADD COLUMN {col_name} {col_type}"))
+            conn.commit()
             
         logger.info("Database schema upgrade check completed")
     except Exception as e:

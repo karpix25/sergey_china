@@ -101,8 +101,9 @@ class VideoPublishLog(Base):
     video_id = Column(Integer, ForeignKey("videos.id", ondelete="CASCADE"), index=True, nullable=False)
     destination_id = Column(Integer, ForeignKey("uploadpost_destinations.id", ondelete="CASCADE"), index=True, nullable=False)
     
-    published_at = Column(DateTime, default=datetime.datetime.utcnow)
-    status = Column(String, default="published") # published | failed
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    published_at = Column(DateTime, nullable=True)
+    status = Column(String, default="processing") # processing | success | failed
     error_message = Column(Text, nullable=True)
 
     video = relationship("Video")

@@ -124,7 +124,7 @@ async def _run_autopublish():
         # 0. Диагностика очереди (исключаем только успешные или зависшие в обработке)
         stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
         blocked_video_ids_query = db.query(models.VideoPublishLog.video_id).filter(
-            (models.VideoPublishLog.status == "success") | 
+            (models.VideoPublishLog.status == "published") | 
             ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
         )
         ready_videos_count = (
@@ -236,7 +236,7 @@ async def _run_autopublish():
             # и которого НЕТ в успешно опубликованных или зависших в обработке.
             stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
             blocked_video_ids_query = db.query(models.VideoPublishLog.video_id).filter(
-                (models.VideoPublishLog.status == "success") | 
+                (models.VideoPublishLog.status == "published") | 
                 ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
             )
             
@@ -320,12 +320,13 @@ async def _run_autopublish():
             if result.get("success"):
                 pub_log.status = "published"
                 pub_log.published_at = datetime.datetime.utcnow()
+                
+                # Обновляем статус в основной таблице видео
+                video.publish_status = "published"
+                video.published_at = pub_log.published_at
+                
                 db.commit()
-                logger.info(
-                    "[Scheduler] ✅ Video %s published to %s at %s.",
-                    video.tiktok_id, dest.name,
-                    datetime.datetime.utcnow().strftime("%H:%M:%S")
-                )
+                logger.info("[Scheduler] ✅ Video %s published to %s", video.tiktok_id, dest.name)
                 log_activity(db, None, f"✅ Видео {video.tiktok_id} успешно опубликовано ({dest.publish_mode})", "success", video_id=video.id)
             else:
                 pub_log.status = "failed"
