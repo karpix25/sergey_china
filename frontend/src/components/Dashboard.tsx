@@ -145,6 +145,23 @@ const Dashboard = () => {
         };
     }, [startPolling]);
 
+    const handleTriggerScheduler = async () => {
+        try {
+            const resp = await fetch(`${API}/api/trigger-scheduler?api_key=${INTERNAL_API_KEY}`, {
+                method: 'POST',
+            });
+            if (resp.ok) {
+                alert('Планировщик запущен вручную. Проверьте вкладку "Активность".');
+                fetchActivity();
+            } else {
+                const err = await resp.json();
+                alert(`Ошибка: ${err.detail || 'Не удалось запустить'}`);
+            }
+        } catch (e) {
+            alert('Сетевая ошибка при запуске планировщика');
+        }
+    };
+
     // Load ENV status for autopublish indicator
     React.useEffect(() => {
         fetch(`${API}/api/autopublish/status`, {
@@ -1226,6 +1243,13 @@ const Dashboard = () => {
                                                         onClick={() => setEditingDest({ ...editingDest, is_active: !editingDest.is_active })}
                                                     >
                                                         <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${editingDest.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                    </button>
+                                                    <button
+                                                        onClick={handleTriggerScheduler}
+                                                        className="mr-auto text-[10px] text-slate-500 hover:text-slate-300 underline underline-offset-2"
+                                                        title="Запустить цикл планировщика немедленно"
+                                                    >
+                                                        Отладка: Запустить сейчас
                                                     </button>
                                                     <span className="text-sm">{editingDest.is_active ? 'Автопубликация включена' : 'Автопубликация выключена'}</span>
                                                 </div>

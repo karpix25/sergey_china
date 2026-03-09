@@ -147,7 +147,9 @@ async def _run_autopublish():
             posts_per_day = dest.posts_per_day or 1
             min_gap = dest.min_time_between_posts_minutes or 60
 
-            if not platforms:
+            # Telegram mode doesn't strictly need Upload-Post platforms
+            if not platforms and dest.publish_mode != "telegram":
+                logger.debug("[Scheduler] Destination %s has no platforms, skipping.", dest.name)
                 continue
 
             # ── 1. Проверяем временное окно ──
@@ -237,7 +239,10 @@ async def _run_autopublish():
             )
 
             if not video:
-                logger.debug(f"[Scheduler] Destination {dest.name}: Queue empty, no global unassigned videos.")
+                # Count why it's empty
+                total_merged = db.query(models.Video).filter(models.Video.status == "merged").count()
+                logger.info("[Scheduler] Destination %s: Queue empty. Total ready videos: %d, already assigned: %d", 
+                            dest.name, total_merged, db.query(assigned_video_ids).count())
                 continue
 
             logger.info(
