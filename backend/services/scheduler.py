@@ -262,14 +262,25 @@ async def _run_autopublish():
                 dest.name, video.tiktok_id, platforms, published_today + 1, posts_per_day,
             )
 
-            # Создаем черновой лог для блокировки видео (чтобы другой поток не взял его же)
-            pub_log = models.VideoPublishLog(
-                video_id=video.id,
-                destination_id=dest.id,
-                status="processing"
-            )
-            db.add(pub_log)
-            db.commit() # видео забронировано
+            # Ищем существующий лог или создаем новый (для блокировки видео)
+            pub_log = db.query(models.VideoPublishLog).filter(
+                models.VideoPublishLog.video_id == video.id,
+                models.VideoPublishLog.destination_id == dest.id
+            ).first()
+
+            if pub_log:
+                pub_log.status = "processing"
+                pub_log.created_at = datetime.datetime.utcnow()
+                pub_log.error_message = None
+            else:
+                pub_log = models.VideoPublishLog(
+                    video_id=video.id,
+                    destination_id=dest.id,
+                    status="processing"
+                )
+                db.add(pub_log)
+            
+            db.commit() # видео забронировано (или обновлена попытка)
 
             video_url = _resolve_video_url(video, storage_service)
             if not video_url:
