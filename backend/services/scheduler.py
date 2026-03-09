@@ -123,15 +123,15 @@ async def _run_autopublish():
 
         # 0. Диагностика очереди (исключаем только успешные или зависшие в обработке)
         stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-        blocked_video_ids = db.query(models.VideoPublishLog.video_id).filter(
+        blocked_video_ids_query = db.query(models.VideoPublishLog.video_id).filter(
             (models.VideoPublishLog.status == "success") | 
             ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
-        ).subquery()
+        )
         ready_videos_count = (
             db.query(models.Video)
             .filter(
                 models.Video.status == "merged",
-                ~models.Video.id.in_(blocked_video_ids)
+                ~models.Video.id.in_(blocked_video_ids_query)
             )
             .count()
         )
@@ -235,16 +235,16 @@ async def _run_autopublish():
             # Видео, которое имеет status == "merged", 
             # и которого НЕТ в успешно опубликованных или зависших в обработке.
             stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-            blocked_video_ids = db.query(models.VideoPublishLog.video_id).filter(
+            blocked_video_ids_query = db.query(models.VideoPublishLog.video_id).filter(
                 (models.VideoPublishLog.status == "success") | 
                 ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
-            ).subquery()
+            )
             
             video = (
                 db.query(models.Video)
                 .filter(
                     models.Video.status == "merged",
-                    ~models.Video.id.in_(blocked_video_ids)
+                    ~models.Video.id.in_(blocked_video_ids_query)
                 )
                 .order_by(models.Video.created_at.asc())
                 .first()
@@ -254,7 +254,7 @@ async def _run_autopublish():
                 # Count why it's empty
                 total_merged = db.query(models.Video).filter(models.Video.status == "merged").count()
                 logger.info("[Scheduler] Destination %s: Queue empty. Total ready videos: %d, currently blocked: %d", 
-                            dest.name, total_merged, db.query(blocked_video_ids).count())
+                            dest.name, total_merged, blocked_video_ids_query.count())
                 continue
 
             logger.info(
