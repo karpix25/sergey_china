@@ -121,13 +121,17 @@ async def _run_autopublish():
         now_utc = datetime.datetime.utcnow()
         today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        # 0. Диагностика очереди
-        assigned_video_ids = db.query(models.VideoPublishLog.video_id).subquery()
+        # 0. Диагностика очереди (исключаем только успешные или зависшие в обработке)
+        stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+        blocked_video_ids = db.query(models.VideoPublishLog.video_id).filter(
+            (models.VideoPublishLog.status == "success") | 
+            ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
+        ).subquery()
         ready_videos_count = (
             db.query(models.Video)
             .filter(
                 models.Video.status == "merged",
-                ~models.Video.id.in_(assigned_video_ids)
+                ~models.Video.id.in_(blocked_video_ids)
             )
             .count()
         )
@@ -229,14 +233,18 @@ async def _run_autopublish():
 
             # ── 5. Берём следующее ГОТОВОЕ УНИКАЛЬНОЕ видео ──
             # Видео, которое имеет status == "merged", 
-            # и которого НЕТ в video_publish_logs ВООБЩЕ (ни для какого профиля).
-            assigned_video_ids = db.query(models.VideoPublishLog.video_id).subquery()
+            # и которого НЕТ в успешно опубликованных или зависших в обработке.
+            stale_threshold = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
+            blocked_video_ids = db.query(models.VideoPublishLog.video_id).filter(
+                (models.VideoPublishLog.status == "success") | 
+                ((models.VideoPublishLog.status == "processing") & (models.VideoPublishLog.created_at > stale_threshold))
+            ).subquery()
             
             video = (
                 db.query(models.Video)
                 .filter(
                     models.Video.status == "merged",
-                    ~models.Video.id.in_(assigned_video_ids)
+                    ~models.Video.id.in_(blocked_video_ids)
                 )
                 .order_by(models.Video.created_at.asc())
                 .first()
@@ -245,8 +253,8 @@ async def _run_autopublish():
             if not video:
                 # Count why it's empty
                 total_merged = db.query(models.Video).filter(models.Video.status == "merged").count()
-                logger.info("[Scheduler] Destination %s: Queue empty. Total ready videos: %d, already assigned: %d", 
-                            dest.name, total_merged, db.query(assigned_video_ids).count())
+                logger.info("[Scheduler] Destination %s: Queue empty. Total ready videos: %d, currently blocked: %d", 
+                            dest.name, total_merged, db.query(blocked_video_ids).count())
                 continue
 
             logger.info(
