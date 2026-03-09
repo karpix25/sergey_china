@@ -15,8 +15,12 @@ Autopublish Scheduler — Smart Spacing
 import logging
 import datetime
 import random
+import os
+from dotenv import load_dotenv
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -105,7 +109,6 @@ async def _run_autopublish():
     """Основная задача планировщика (вызывается раз в минуту)."""
     from database import SessionLocal
     import models
-    import os
     from services.uploadpost import uploadpost_service
     from services.storage import storage_service
     from services.telegram_sender import send_video_to_telegram
@@ -351,7 +354,6 @@ def _resolve_video_url(video, storage_service) -> str | None:
     # Local path (only works if server is accessible from Upload-Post)
     if video.local_video_path:
         backend_url = "http://localhost:8000"  # Overridable via env
-        import os
         backend_url = os.environ.get("BACKEND_PUBLIC_URL", backend_url)
         return f"{backend_url}/{video.local_video_path.lstrip('/')}"
 

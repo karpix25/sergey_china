@@ -83,7 +83,7 @@ class UploadPostDestinationResponse(BaseModel):
 
 class ActivityLogResponse(BaseModel):
     id: int
-    profile_id: int
+    profile_id: Optional[int] = None
     video_id: Optional[int] = None
     event_type: str
     message: str
